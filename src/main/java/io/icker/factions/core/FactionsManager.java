@@ -10,7 +10,8 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.entity.damage.DamageSource;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.network.packet.s2c.play.PlayerListS2CPacket;
-import net.minecraft.screen.GenericContainerScreenHandler;
+import net.minecraft.screen.ScreenHandler;
+import net.minecraft.screen.ScreenHandlerType;
 import net.minecraft.screen.SimpleNamedScreenHandlerFactory;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.PlayerManager;
@@ -32,6 +33,7 @@ public class FactionsManager {
         PlayerEvents.ON_KILLED_BY_PLAYER.register(FactionsManager::playerDeath);
         PlayerEvents.ON_POWER_TICK.register(FactionsManager::powerTick);
         PlayerEvents.OPEN_SAFE.register(FactionsManager::openSafe);
+        PlayerEvents.CLOSE_SAFE.register(FactionsManager::closeSafe);
     }
 
     private static void serverStarted(MinecraftServer server) {
@@ -93,24 +95,38 @@ public class FactionsManager {
 
         if (!user.isInFaction()) {
             if (FactionsMod.CONFIG.SAFE != null && FactionsMod.CONFIG.SAFE.ENDER_CHEST) {
-                new Message("Cannot use enderchests when not in a faction").fail().send(player, false);
+                //new Message("Cannot use enderchests when not in a faction").fail().send(player, false);
                 return ActionResult.FAIL;
             }
             return ActionResult.PASS;
         }
 
         player.openHandledScreen(
-            new SimpleNamedScreenHandlerFactory(
-                (syncId, inventory, p) -> {
-                    if (FactionsMod.CONFIG.SAFE.DOUBLE) {
-                        return GenericContainerScreenHandler.createGeneric9x6(syncId, inventory, faction.getSafe());
-                    } else {
-                        return GenericContainerScreenHandler.createGeneric9x3(syncId, inventory, faction.getSafe());
-                    }
-                },
-                Text.of(String.format("%s's Safe", faction.getName()))
-            )
+                new SimpleNamedScreenHandlerFactory(
+                        (syncId, inventory, p) -> {
+                            ScreenHandler handler;
+                            int multiplier = 18;
+                            if (FactionsMod.CONFIG.SAFE.DOUBLE) {
+                                multiplier = 9;
+                                handler = new CustomContainerScreenHandler(syncId, inventory, ScreenHandlerType.GENERIC_9X6, faction, multiplier);
+                            } else {
+                                handler = new CustomContainerScreenHandler(syncId, inventory, ScreenHandlerType.GENERIC_9X3, faction, multiplier);
+                            }
+                            return handler;
+                        },
+                        Text.of(String.format("%s's Safe", faction.getName()))
+                )
         );
+
+        return ActionResult.SUCCESS;
+    }
+
+    private static ActionResult closeSafe(PlayerEntity player, Faction faction) {
+        User user =  User.get(player.getUuid());
+
+        if (user.isInFaction() && user.getFaction().equals(faction)) {
+            faction.clearBlockedItems(player);
+        }
 
         return ActionResult.SUCCESS;
     }
