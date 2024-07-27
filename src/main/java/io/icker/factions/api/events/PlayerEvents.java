@@ -145,4 +145,19 @@ public class PlayerEvents {
     public interface OpenSafe {
         ActionResult onOpenSafe(PlayerEntity player, Faction faction);
     }
+
+    public static final Event<CloseSafe> CLOSE_SAFE = EventFactory.createArrayBacked(CloseSafe.class, callbacks -> (player, faction) -> {
+    for (CloseSafe callback : callbacks) {
+        ActionResult result = callback.onCloseSafe(player, faction);
+        if (result != ActionResult.PASS) {
+            return result;
+        }
+    }
+    return ActionResult.PASS;
+});
+
+@FunctionalInterface
+public interface CloseSafe {
+    ActionResult onCloseSafe(PlayerEntity player, Faction faction);
+}
 }

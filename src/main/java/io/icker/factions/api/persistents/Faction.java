@@ -5,9 +5,10 @@ import io.icker.factions.api.events.FactionEvents;
 import io.icker.factions.database.Database;
 import io.icker.factions.database.Field;
 import io.icker.factions.database.Name;
-import net.minecraft.inventory.Inventory;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.collection.DefaultedList;
 import org.jetbrains.annotations.Nullable;
@@ -137,6 +138,21 @@ public class Faction {
         DefaultedList<ItemStack> stacks = this.safe.stacks;
         this.safe = new SimpleInventory(54);
         return stacks;
+    }
+
+    // Function to clear blocked items from the safe
+    public DefaultedList<ItemStack> clearBlockedItems(PlayerEntity player) {
+        DefaultedList<ItemStack> removedItems = DefaultedList.of();
+        for (int i = 0; i < this.safe.size(); i++) {
+            ItemStack item = this.safe.getStack(i);
+            String itemName = Registries.ITEM.getId(item.getItem()).getPath();
+            if (FactionsMod.CONFIG.SAFE.BLOCKED_ITEMS.contains(itemName)) {
+                removedItems.add(item);
+                player.dropItem(item, false); // Drop the blocked item
+                this.safe.setStack(i, ItemStack.EMPTY); // Remove the blocked item from the safe
+            }
+        }
+        return removedItems; // Return the removed blocked items
     }
 
     public boolean isOpen() {
