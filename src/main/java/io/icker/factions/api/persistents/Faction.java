@@ -8,6 +8,7 @@ import io.icker.factions.database.Name;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Formatting;
 import net.minecraft.util.collection.DefaultedList;
 import org.jetbrains.annotations.Nullable;
