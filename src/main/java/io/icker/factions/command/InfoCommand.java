@@ -101,6 +101,8 @@ public class InfoCommand implements Command {
         new Message(Formatting.RED + "Enemies (" + Formatting.WHITE + faction.getEnemiesWith().size() + Formatting.RED + "): ")
             .add(enemiesWith)
             .send(player, false);
+        new Message(Formatting.YELLOW + "Faction Points (" + Formatting.WHITE + faction.getCounter() + Formatting.YELLOW + "): ")
+                .send(player, false);
 
         return 1;
     }

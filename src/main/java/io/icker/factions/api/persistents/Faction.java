@@ -10,6 +10,7 @@ import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.collection.DefaultedList;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,9 +35,6 @@ public class Faction {
     @Field("Color")
     private String color;
 
-    /**
-     * Whether a player can join without an invitation
-     */
     @Field("Open")
     private boolean open;
 
@@ -58,7 +56,13 @@ public class Faction {
     @Field("GuestPermissions")
     public ArrayList<Relationship.Permissions> guest_permissions = new ArrayList<>(FactionsMod.CONFIG.RELATIONSHIPS.DEFAULT_GUEST_PERMISSIONS);
 
-    public Faction(String name, String description, String motd, Formatting color, boolean open, int power) {
+    @Field("FactionCounter")
+    private int counter = 0;
+
+    @Field("FactionBlockPos")
+    private String factionBlockPosString;
+
+    public Faction(String name, String description, String motd, Formatting color, boolean open, int power, int counter) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.motd = motd;
@@ -66,6 +70,8 @@ public class Faction {
         this.color = color.getName();
         this.open = open;
         this.power = power;
+        this.counter = counter;
+        this.factionBlockPosString = null;
     }
 
     @SuppressWarnings("unused")
@@ -84,10 +90,10 @@ public class Faction {
     @Nullable
     public static Faction getByName(String name) {
         return STORE.values()
-            .stream()
-            .filter(f -> f.name.equals(name))
-            .findFirst()
-            .orElse(null);
+                .stream()
+                .filter(f -> f.name.equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public static void add(Faction faction) {
@@ -101,9 +107,9 @@ public class Faction {
     @SuppressWarnings("unused")
     public static List<Faction> allBut(UUID id) {
         return STORE.values()
-            .stream()
-            .filter(f -> f.id != id)
-            .toList();
+                .stream()
+                .filter(f -> f.id != id)
+                .toList();
     }
 
     public UUID getID() {
@@ -206,8 +212,8 @@ public class Faction {
 
     public void removeAllClaims() {
         Claim.getByFaction(id)
-            .stream()
-            .forEach(Claim::remove);
+                .stream()
+                .forEach(Claim::remove);
         FactionEvents.REMOVE_ALL_CLAIMS.invoker().onRemoveAllClaims(this);
     }
 
@@ -289,8 +295,57 @@ public class Faction {
         Database.save(Faction.class, STORE.values().stream().toList());
     }
 
-//  TODO(samu): import per-player power patch
     public int calculateMaxPower(){
         return FactionsMod.CONFIG.POWER.BASE + (getUsers().size() * FactionsMod.CONFIG.POWER.MEMBER);
+    }
+
+    public int getCounter() {
+        int totalVotePoints = 0;
+        for (User user : getUsers()) {
+            totalVotePoints += user.getVotePoints();
+        }
+        return counter + totalVotePoints;
+    }
+
+    public void incrementCounter() {
+        counter++;
+    }
+
+    public void setCounter(int counter) {
+        this.counter = counter;
+        save(); // Save the faction's data if necessary
+    }
+
+
+    public void resetCounter() {
+        counter = 0;
+    }
+
+    public void setFactionBlockPos(BlockPos pos) {
+        this.factionBlockPosString = posToString(pos);
+    }
+
+    public BlockPos getFactionBlockPos() {
+        return posFromString(factionBlockPosString);
+    }
+
+    public boolean hasFactionBlock() {
+        return factionBlockPosString != null;
+    }
+
+    public void removeFactionBlock() {
+        this.factionBlockPosString = null;
+    }
+
+    private static String posToString(BlockPos pos) {
+        return pos == null ? "" : pos.getX() + "," + pos.getY() + "," + pos.getZ();
+    }
+
+    private static BlockPos posFromString(String posString) {
+        if (posString == null || posString.isEmpty()) {
+            return null;
+        }
+        String[] parts = posString.split(",");
+        return new BlockPos(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
     }
 }
