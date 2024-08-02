@@ -53,6 +53,9 @@ public class User {
     @Field("Sounds")
     public SoundMode sounds = SoundMode.ALL;
 
+    @Field("VotePoints")
+    private int votePoints = 0;
+
     public boolean autoclaim = false;
     public boolean bypass = false;
     public String language = "en_us";
@@ -102,7 +105,7 @@ public class User {
                 .stream(value.name().split("_"))
                 .map(word -> word.isEmpty() ? word :
                         Character.toTitleCase(word.charAt(0)) +
-                        word.substring(1).toLowerCase())
+                                word.substring(1).toLowerCase())
                 .collect(Collectors.joining(" "));
     }
 
@@ -144,6 +147,20 @@ public class User {
         FactionEvents.MEMBER_LEAVE.invoker().onMemberLeave(Faction.get(oldFactionID), this);
     }
 
+    public void setVotePoints(int points) {
+        this.votePoints = points;
+        save(); // Save the user's data if necessary
+    }
+
+    public int getVotePoints() {
+        return this.votePoints;
+    }
+
+    public void incrementVotePoints(int points) {
+        this.votePoints += points;
+        save(); // Save the user's data if necessary
+    }
+
     public static Collection<User> all() {
         return STORE.values();
     }
@@ -151,5 +168,4 @@ public class User {
     public static void save() {
         Database.save(User.class, STORE.values().stream().toList());
     }
-
 }
