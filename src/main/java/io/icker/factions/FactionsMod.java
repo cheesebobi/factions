@@ -86,6 +86,7 @@ public class FactionsMod implements ModInitializer {
                 new AdminCommand(),
                 new SettingsCommand(),
                 new ClaimCommand(),
+                new UnclaimCommand(),
                 new CreateCommand(),
                 new DeclareCommand(),
                 new DisbandCommand(),
@@ -107,7 +108,8 @@ public class FactionsMod implements ModInitializer {
                 new ViewVotePointsCommand(),
                 new SetVotePointsCommand(),
                 new TopFactionsCommand(),
-                new SetFactionPointsCommand()
+                new SetFactionPointsCommand(),
+                new SetDiscordCommand()
         };
 
         for (Command command : commands) {

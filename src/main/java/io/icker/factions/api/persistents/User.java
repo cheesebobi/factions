@@ -56,6 +56,9 @@ public class User {
     @Field("VotePoints")
     private int votePoints = 0;
 
+    @Field("DiscordUsername")
+    private String discordUsername = "";
+
     public boolean autoclaim = false;
     public boolean bypass = false;
     public String language = "en_us";
@@ -158,6 +161,15 @@ public class User {
 
     public void incrementVotePoints(int points) {
         this.votePoints += points;
+        save(); // Save the user's data if necessary
+    }
+
+    public String getDiscordUsername() {
+        return discordUsername;
+    }
+
+    public void setDiscordUsername(String discordUsername) {
+        this.discordUsername = discordUsername;
         save(); // Save the user's data if necessary
     }
 
