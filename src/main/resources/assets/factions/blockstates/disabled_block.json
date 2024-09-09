@@ -1,0 +1,5 @@
+{
+  "variants": {
+    "": { "model": "factions:block/disabled_block" }
+  }
+}

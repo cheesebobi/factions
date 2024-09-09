@@ -37,6 +37,8 @@ public class FactionsMod implements ModInitializer {
     public static DynmapWrapper dynmap;
 
     public static final Block FACTIONS_BLOCK = new FactionBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f).luminance(15));
+
+    public static final Block DISABLED_BLOCK = new Block(FabricBlockSettings.of(Material.METAL).strength(4.0f).luminance(1));
     public static BlockEntityType<FactionBlockEntity> FACTIONS_BLOCK_ENTITY;
 
 
@@ -52,6 +54,8 @@ public class FactionsMod implements ModInitializer {
         Registry.register(Registries.BLOCK, new Identifier("factions", "factions_block"), FACTIONS_BLOCK);
         Registry.register(Registries.ITEM, new Identifier("factions", "factions_block"), new BlockItem(FACTIONS_BLOCK, new Item.Settings()));
 
+        Registry.register(Registries.BLOCK, new Identifier("factions", "disabled_block"), DISABLED_BLOCK);
+        Registry.register(Registries.ITEM, new Identifier("factions", "disabled_block"), new BlockItem(DISABLED_BLOCK, new Item.Settings()));
 
         FACTIONS_BLOCK_ENTITY = Registry.register(
                 Registries.BLOCK_ENTITY_TYPE,
@@ -92,6 +96,7 @@ public class FactionsMod implements ModInitializer {
                 new DisbandCommand(),
                 new HomeCommand(),
                 new InfoCommand(),
+                new WhoCommand(),
                 new InviteCommand(),
                 new JoinCommand(),
                 new KickCommand(),
