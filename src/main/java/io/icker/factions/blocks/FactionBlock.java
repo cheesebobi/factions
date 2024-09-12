@@ -4,8 +4,10 @@ import java.util.List;
 import java.util.UUID;
 
 import io.icker.factions.FactionsMod;
+import io.icker.factions.api.events.PlayerEvents;
 import io.icker.factions.api.persistents.Claim;
 import io.icker.factions.api.persistents.Faction;
+import io.icker.factions.api.persistents.User;
 import io.icker.factions.util.Command;
 import io.icker.factions.util.Message;
 import net.minecraft.block.Block;
@@ -18,6 +20,11 @@ import net.minecraft.entity.LivingEntity;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
 import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.util.ActionResult;
+import net.minecraft.util.Hand;
+import net.minecraft.util.ItemScatterer;
+import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.util.hit.BlockHitResult;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
@@ -121,6 +128,44 @@ public class FactionBlock extends Block implements BlockEntityProvider {
 		if (state.getBlock() != newState.getBlock()) {
 			resetFactionCounterAndRemoveBlock(world, pos);
 			super.onStateReplaced(state, world, pos, newState, moved);
+		}
+	}
+
+	@Override
+	public ActionResult onUse(BlockState state, World world, BlockPos pos, PlayerEntity player, Hand hand, BlockHitResult hit) {
+		if (world.isClient) {
+			return ActionResult.SUCCESS;
+		}
+
+		if (!(player instanceof ServerPlayerEntity)) {
+			return ActionResult.PASS;
+		}
+
+		ServerPlayerEntity serverPlayer = (ServerPlayerEntity) player;
+
+		// Get the faction of the player
+		User user = Command.getUser(serverPlayer);
+		Faction faction = user.getFaction();
+
+		if (faction != null) {
+			// Ensure the block is associated with the faction and is allowed to open the safe
+			FactionBlockEntity blockEntity = (FactionBlockEntity) world.getBlockEntity(pos);
+			if (blockEntity != null && faction.equals(blockEntity.getFaction())) {
+				// Clear blocked items and open the safe
+				DefaultedList<ItemStack> safeItems = faction.clearBlockedItems(serverPlayer);
+				ItemScatterer.spawn(serverPlayer.getWorld(), serverPlayer.getBlockPos(), safeItems);
+
+				// Trigger the OPEN_SAFE event
+				PlayerEvents.OPEN_SAFE.invoker().onOpenSafe(serverPlayer, faction);
+
+				return ActionResult.SUCCESS;
+			} else {
+				new Message("This Faction Block does not belong to your faction!").fail().send(serverPlayer, false);
+				return ActionResult.FAIL;
+			}
+		} else {
+			new Message("You are not part of a faction!").fail().send(serverPlayer, false);
+			return ActionResult.FAIL;
 		}
 	}
 }
