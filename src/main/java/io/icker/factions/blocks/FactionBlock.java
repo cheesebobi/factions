@@ -60,6 +60,7 @@ public class FactionBlock extends Block implements BlockEntityProvider {
 		if (blockFaction != null) {
 			if (blockFaction.hasFactionBlock()) {
 				new Message("Your faction already has a Faction Block placed, this one won't count!").fail().send(player, false);
+				replaceWithDisabledBlock(world, pos);
 				return;
 			}
 
@@ -78,7 +79,19 @@ public class FactionBlock extends Block implements BlockEntityProvider {
 					return;
 				}
 			}
+
+			// If no claim matches, replace with disabled block
+			replaceWithDisabledBlock(world, pos);
+		} else {
+			new Message("You must be in a faction to place a Faction Block!").fail().send(player, false);
+			replaceWithDisabledBlock(world, pos);
 		}
+	}
+
+	private void replaceWithDisabledBlock(World world, BlockPos pos) {
+		BlockState disabledBlockState = FactionsMod.DISABLED_BLOCK.getDefaultState();
+		world.setBlockState(pos, disabledBlockState);
+		FactionsMod.LOGGER.info("Faction Block at " + pos + " has been replaced with a FactionsDisabled_Block.");
 	}
 
 	private void resetFactionCounterAndRemoveBlock(World world, BlockPos pos) {
