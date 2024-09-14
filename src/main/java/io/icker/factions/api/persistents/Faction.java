@@ -9,9 +9,14 @@ import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
+import net.minecraft.registry.Registry;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -80,6 +85,24 @@ public class Faction {
     @SuppressWarnings("unused")
     public String getKey() {
         return id.toString();
+    }
+
+    public RegistryKey<World> getWorldKey() {
+        BlockPos fBlock = getFactionBlockPos(); // Get faction block position
+        if (fBlock == null) {
+            return null; // If there is no faction block set, return null
+        }
+
+        List<Claim> claims = getClaims(); // Get all claims for this faction
+        for (Claim claim : claims) {
+            // Assuming the faction block is in this chunk, you may need a chunk-position check
+            if (claim.x == fBlock.getX() >> 4 && claim.z == fBlock.getZ() >> 4) {
+                // Convert the level string to a RegistryKey<World>
+                return RegistryKey.of(RegistryKeys.WORLD, new Identifier(claim.level));
+            }
+        }
+
+        return null; // Return null if no matching claim is found
     }
 
     @Nullable

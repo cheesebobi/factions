@@ -9,6 +9,7 @@ import io.icker.factions.config.Config;
 import io.icker.factions.core.*;
 import io.icker.factions.util.Command;
 import io.icker.factions.util.DynmapWrapper;
+import io.icker.factions.util.FlightHandler;
 import io.icker.factions.util.PlaceholdersWrapper;
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -69,6 +70,7 @@ public class FactionsMod implements ModInitializer {
         ServerManager.register();
         SoundManager.register();
         WorldManager.register();
+        FlightHandler.register();
 
         CommandRegistrationCallback.EVENT.register(FactionsMod::registerCommands);
     }
