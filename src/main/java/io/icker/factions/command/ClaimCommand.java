@@ -80,21 +80,49 @@ public class ClaimCommand implements Command {
                 Claim existingClaim = Claim.get(chunkPos.x, chunkPos.z, dimension);
 
                 if (existingClaim != null) {
-                    if (size == 1) {
-                        String owner = existingClaim.getFaction().getID() == faction.getID() ? "Your" : "Another";
-                        new Message(owner + " faction already owns this chunk").fail().send(player, false);
-                        return 0;
-                    } else if (existingClaim.getFaction().getID() != faction.getID()) {
-                        new Message("Another faction already owns a chunk").fail().send(player, false);
-                        return 0;
-                    }
-                }
+                    Faction targetFaction = existingClaim.getFaction();
 
-                chunks.add(chunkPos);
+                    if (targetFaction.getID() == faction.getID()) {
+                        // Your faction already owns this chunk
+                        continue; // Skip this chunk
+                    } else {
+                        // Another faction owns this chunk
+                        int targetRequiredPower = targetFaction.getClaims().size() * FactionsMod.CONFIG.POWER.CLAIM_WEIGHT;
+                        int targetCurrentPower = targetFaction.getPower();
+
+                        if (targetCurrentPower < targetRequiredPower) {
+                            // Target faction doesn't have enough power, allow overclaiming
+                            existingClaim.remove();
+                            chunks.add(chunkPos);
+                        } else {
+                            // Cannot overclaim, target faction has enough power
+                            if (size == 1) {
+                                new Message("Another faction already owns this chunk and has enough power").fail().send(player, false);
+                                return 0;
+                            } else {
+                                new Message("Another faction already owns a chunk and has enough power").fail().send(player, false);
+                                return 0;
+                            }
+                        }
+                    }
+                } else {
+                    // Chunk is unclaimed, add it to the list
+                    chunks.add(chunkPos);
+                }
             }
         }
 
-        chunks.forEach(chunk -> faction.addClaim(chunk.x, chunk.z, dimension));
+        if (chunks.isEmpty()) {
+            new Message("No new chunks were claimed because they are already owned by your faction").send(player, false);
+            return 1;
+        }
+
+        // Proceed to add claims for all chunks in the list
+        for (ChunkPos chunk : chunks) {
+            faction.addClaim(chunk.x, chunk.z, dimension);
+        }
+
+        // Send confirmation message
         if (size == 1) {
             new Message(
                     "Chunk (%d, %d) claimed by %s",
@@ -103,12 +131,18 @@ public class ClaimCommand implements Command {
                     player.getName().getString()
             ).send(faction);
         } else {
+            // Calculate the min and max coordinates for the message
+            int minX = chunks.stream().mapToInt(c -> c.x).min().orElse(0);
+            int minZ = chunks.stream().mapToInt(c -> c.z).min().orElse(0);
+            int maxX = chunks.stream().mapToInt(c -> c.x).max().orElse(0);
+            int maxZ = chunks.stream().mapToInt(c -> c.z).max().orElse(0);
+
             new Message(
                     "Chunks (%d, %d) to (%d, %d) claimed by %s",
-                    chunks.get(0).x,
-                    chunks.get(0).z,
-                    chunks.get(0).x + size - 1,
-                    chunks.get(0).z + size - 1,
+                    minX,
+                    minZ,
+                    maxX,
+                    maxZ,
                     player.getName().getString()
             ).send(faction);
         }
@@ -116,14 +150,15 @@ public class ClaimCommand implements Command {
         return 1;
     }
 
+
     private int add(CommandContext<ServerCommandSource> context) throws CommandSyntaxException {
         ServerPlayerEntity player = context.getSource().getPlayer();
         Faction faction = Command.getUser(player).getFaction();
 
         int requiredPower = (faction.getClaims().size() + 1) * FactionsMod.CONFIG.POWER.CLAIM_WEIGHT;
-        int maxPower = faction.getUsers().size() * FactionsMod.CONFIG.POWER.MEMBER + FactionsMod.CONFIG.POWER.BASE;
+        int currentPower = faction.getPower();
 
-        if (maxPower < requiredPower) {
+        if (currentPower < requiredPower) {
             new Message("Not enough faction power to claim chunk").fail().send(player, false);
             return 0;
         }
@@ -137,9 +172,9 @@ public class ClaimCommand implements Command {
         Faction faction = Command.getUser(player).getFaction();
 
         int requiredPower = (faction.getClaims().size() + 1) * FactionsMod.CONFIG.POWER.CLAIM_WEIGHT;
-        int maxPower = faction.getUsers().size() * FactionsMod.CONFIG.POWER.MEMBER + FactionsMod.CONFIG.POWER.BASE;
+        int currentPower = faction.getPower();
 
-        if (maxPower < requiredPower) {
+        if (currentPower < requiredPower) {
             new Message("Not enough faction power to claim chunks").fail().send(player, false);
             return 0;
         }

@@ -121,6 +121,8 @@ public class InteractionManager {
     }
 
     private static ActionResult onAttackEntity(PlayerEntity player, World world, Hand hand, Entity entity, EntityHitResult hitResult) {
+        if (FactionsMod.CONFIG.ATTACK_CLAIMED_CHUNKS) return ActionResult.PASS;
+
         if (entity != null && checkPermissions(player, entity.getBlockPos(), world, Permissions.ATTACK_ENTITIES) == ActionResult.FAIL) {
             InteractionsUtil.warn(player, "attack entities");
             return ActionResult.FAIL;
@@ -130,6 +132,8 @@ public class InteractionManager {
     }
 
     private static ActionResult onUseEntity(PlayerEntity player, Entity entity, World world) {
+        if (FactionsMod.CONFIG.ATTACK_CLAIMED_CHUNKS) return ActionResult.PASS;
+
         if (checkPermissions(player, entity.getBlockPos(), world, Permissions.USE_ENTITIES) == ActionResult.FAIL) {
             InteractionsUtil.warn(player, "use entities");
             return ActionResult.FAIL;
