@@ -79,6 +79,9 @@ public class Config {
     @SerializedName("friendlyFire")
     public boolean FRIENDLY_FIRE = false;
 
+    @SerializedName("attackInClaimedChunks")
+    public boolean ATTACK_CLAIMED_CHUNKS = true;
+
     @SerializedName("requiredBypassLevel")
     public int REQUIRED_BYPASS_LEVEL = 2;
 
