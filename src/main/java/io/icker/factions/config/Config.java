@@ -88,6 +88,9 @@ public class Config {
     @SerializedName("claimProtections")
     public boolean CLAIM_PROTECTION = true;
 
+    @SerializedName("discordAuthKey")
+    public String DISCORD_AUTH_KEY = "Auth Key Here";
+
     public static class DisplayConfig {
         @SerializedName("factionNameMaxLength")
         public int NAME_MAX_LENGTH = -1;

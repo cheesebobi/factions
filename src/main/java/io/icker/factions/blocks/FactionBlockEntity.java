@@ -16,7 +16,14 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Box;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
-
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.OutputStream;
+import com.google.gson.Gson;
+import java.nio.charset.StandardCharsets;
+import java.util.stream.Collectors;
+import java.util.Map;
+import java.util.HashMap;
 import java.util.*;
 
 public class FactionBlockEntity extends BlockEntity {
@@ -142,6 +149,22 @@ public class FactionBlockEntity extends BlockEntity {
 
 	private void sendIntruderAlert(World world, ServerPlayerEntity intruder) {
 		String intruderName = intruder.getName().getString();
+
+		// Collect Discord IDs of faction members
+		List<String> discordUsernames = faction.getUsers().stream()
+				.map(member -> member.getDiscordUsername()) // Assuming you have this method
+				.filter(Objects::nonNull)
+				.collect(Collectors.toList());
+
+		// Create a data object to send
+		Map<String, Object> data = new HashMap<>();
+		data.put("intruderName", intruderName);
+		data.put("discordUsernames", discordUsernames);
+
+		// Convert data to JSON
+		Gson gson = new Gson();
+		String jsonData = gson.toJson(data);
+
 		Text message = Text.literal("Intruder detected near your faction block: " + intruderName)
 				.formatted(Formatting.RED);
 
@@ -152,5 +175,33 @@ public class FactionBlockEntity extends BlockEntity {
 				memberPlayer.sendMessage(message, false);
 			}
 		}
+
+		// Send HTTP POST request
+		try {
+			URL url = new URL("https://factiondiscordhook.kubanbt.net/alert");
+			HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+			conn.setRequestMethod("POST");
+			conn.setRequestProperty("Content-Type", "application/json; utf-8");
+			conn.setDoOutput(true);
+
+			// Optional: Add authentication token
+			conn.setRequestProperty("Authorization", "Bearer "+FactionsMod.CONFIG.DISCORD_AUTH_KEY);
+
+			try (OutputStream os = conn.getOutputStream()) {
+				byte[] input = jsonData.getBytes(StandardCharsets.UTF_8);
+				os.write(input, 0, input.length);
+			}
+
+			int code = conn.getResponseCode();
+			if (code != 200) {
+				// Handle error
+				System.err.println("Failed to send alert to Discord bot, response code: " + code);
+			}
+
+			conn.disconnect();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
+
 }
