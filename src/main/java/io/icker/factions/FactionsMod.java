@@ -112,6 +112,7 @@ public class FactionsMod implements ModInitializer {
                 new PermissionCommand(),
                 new GiveFactionBlockCommand(),
                 new IncrementVotePointsCommand(),
+                new DecreaseVotePointsCommand(),
                 new ViewVotePointsCommand(),
                 new SetVotePointsCommand(),
                 new TopFactionsCommand(),

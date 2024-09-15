@@ -150,6 +150,10 @@ public class FactionBlockEntity extends BlockEntity {
 	private void sendIntruderAlert(World world, ServerPlayerEntity intruder) {
 		String intruderName = intruder.getName().getString();
 
+		if (faction == null) {
+			return;
+		}
+
 		// Collect Discord IDs of faction members
 		List<String> discordUsernames = faction.getUsers().stream()
 				.map(member -> member.getDiscordUsername()) // Assuming you have this method

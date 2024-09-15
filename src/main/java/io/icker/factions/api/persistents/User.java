@@ -164,6 +164,11 @@ public class User {
         save(); // Save the user's data if necessary
     }
 
+    public void decreaseVotePoints(int points) {
+        this.votePoints -= points;
+        save(); // Save the user's data if necessary
+    }
+
     public String getDiscordUsername() {
         return discordUsername;
     }
