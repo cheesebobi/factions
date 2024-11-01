@@ -84,7 +84,7 @@ public class FactionBlockEntity extends BlockEntity {
 
 	public static void tick(World world, BlockPos pos, BlockState state, FactionBlockEntity blockEntity) {
 		blockEntity.tickCounter++;
-		if (blockEntity.tickCounter >= 100) { // Every 5 seconds (20 ticks per second)
+		if (blockEntity.tickCounter >= 20) {
 			blockEntity.tickCounter = 0;
 
 			if (blockEntity.faction != null) {
@@ -126,7 +126,7 @@ public class FactionBlockEntity extends BlockEntity {
 			UUID playerUUID = player.getUuid();
 
 			User user = Command.getUser(player);
-			if (user != null && user.getFaction() != null && user.getFaction().equals(faction)) {
+			if ((user != null && user.getFaction() != null && user.getFaction().equals(faction)) || player.isCreative() || player.isSpectator()) {
 				// Player is a member of the faction; skip
 				continue;
 			}
@@ -152,7 +152,7 @@ public class FactionBlockEntity extends BlockEntity {
 
 		// Collect Discord IDs of faction members
 		List<String> discordUsernames = faction.getUsers().stream()
-				.map(member -> member.getDiscordUsername()) // Assuming you have this method
+				.map(member -> member.getDiscordUsername())
 				.filter(Objects::nonNull)
 				.collect(Collectors.toList());
 
