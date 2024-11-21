@@ -2,6 +2,7 @@ package io.icker.factions.mixin;
 
 import io.icker.factions.FactionsMod;
 import io.icker.factions.api.events.PlayerEvents;
+import io.icker.factions.api.persistents.Claim;
 import io.icker.factions.api.persistents.Faction;
 import io.icker.factions.api.persistents.User;
 import io.icker.factions.util.Message;
@@ -14,6 +15,8 @@ import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.text.Text;
 import net.minecraft.util.ActionResult;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.World;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -69,6 +72,25 @@ public abstract class ServerPlayerEntityMixin extends LivingEntity {
                         new Message(((ServerPlayerEntity) (Object) this).getName().getString()).format(Formatting.WHITE)
                 ).raw());
             }
+        }
+    }
+
+    @Inject(method = "canModifyAt", at = @At("RETURN"), cancellable = true)
+    public void changeCanModifyAt(World world, BlockPos pos, CallbackInfoReturnable<Boolean> cir) {
+        ServerPlayerEntity self = (ServerPlayerEntity) (Object) this;
+        User user = User.get(((ServerPlayerEntity) (Object) this).getUuid());
+        Faction faction = user.getFaction();
+        String dimension = world.getRegistryKey().getValue().toString();
+        ChunkPos chunkPos = world.getChunk(pos).getPos();
+        Claim existingClaim = Claim.get(chunkPos.x, chunkPos.z, dimension);
+        if (existingClaim == null) {
+            cir.setReturnValue(world.canPlayerModifyAt(self, pos));
+        }
+        else if (existingClaim.getFaction().equals(faction)) {
+            cir.setReturnValue(world.canPlayerModifyAt(self, pos));
+        }
+        else {
+            cir.setReturnValue(false);
         }
     }
 }
