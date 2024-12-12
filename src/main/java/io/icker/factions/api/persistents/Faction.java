@@ -8,6 +8,9 @@ import io.icker.factions.database.Name;
 import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.nbt.NbtElement;
+import net.minecraft.nbt.NbtList;
 import net.minecraft.registry.Registries;
 import net.minecraft.registry.RegistryKey;
 import net.minecraft.registry.RegistryKeys;
@@ -168,20 +171,38 @@ public class Faction {
         return stacks;
     }
 
-    // Function to clear blocked items from the safe
     public DefaultedList<ItemStack> clearBlockedItems(PlayerEntity player) {
         DefaultedList<ItemStack> removedItems = DefaultedList.of();
         for (int i = 0; i < this.safe.size(); i++) {
             ItemStack item = this.safe.getStack(i);
-            String itemName = Registries.ITEM.getId(item.getItem()).getPath();
-            if (FactionsMod.CONFIG.SAFE.BLOCKED_ITEMS.contains(itemName)) {
+            if (isItemBlocked(item)) {
                 removedItems.add(item);
-                player.dropItem(item, false); // Drop the blocked item
-                this.safe.setStack(i, ItemStack.EMPTY); // Remove the blocked item from the safe
+                player.dropItem(item, false);
+                this.safe.setStack(i, ItemStack.EMPTY);
             }
         }
-        return removedItems; // Return the removed blocked items
+        return removedItems;
     }
+
+    private boolean isItemBlocked(ItemStack stack) {
+        String itemName = Registries.ITEM.getId(stack.getItem()).getPath();
+        if (FactionsMod.CONFIG.SAFE.BLOCKED_ITEMS.contains(itemName)) {
+            return true;
+        }
+
+        // Convert NBT to string and check if it contains any blocked item names
+        if (stack.hasNbt()) {
+            String nbtString = stack.getNbt().toString();
+            for (String blockedItem : FactionsMod.CONFIG.SAFE.BLOCKED_ITEMS) {
+                if (nbtString.contains(blockedItem)) {
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
 
     public boolean isOpen() {
         return open;
