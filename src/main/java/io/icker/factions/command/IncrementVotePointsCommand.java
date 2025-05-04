@@ -54,7 +54,9 @@ public class IncrementVotePointsCommand implements Command {
 		if (player != null) {
 			new Message("You have been awarded " + points + " vote points.").send(player, false);
 		} else {
-			source.sendFeedback(Text.literal("You have awarded " + points + " vote points to " + username), false);
+			String finalUsername = username;
+			source.sendFeedback(() -> Text.literal("You have awarded " + points + " vote points to " + finalUsername), false);
+
 		}
 		return 1;
 	}

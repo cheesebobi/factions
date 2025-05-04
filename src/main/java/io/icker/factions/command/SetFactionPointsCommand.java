@@ -35,7 +35,7 @@ public class SetFactionPointsCommand implements Command {
 		}
 
 		faction.setCounter(points);
-		source.sendFeedback(Text.literal("Set the points for faction " + faction.getName() + " to " + points + "."), false);
+		source.sendFeedback(() -> Text.literal("Set the points for faction " + faction.getName() + " to " + points + "."), false);
 		return 1;
 	}
 

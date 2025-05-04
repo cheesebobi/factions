@@ -33,7 +33,7 @@ public class TopFactionsCommand implements Command {
 			message.append(String.format("%d. %s - %d points\n", i + 1, faction.getName(), faction.getCounter()));
 		}
 
-		source.sendFeedback(Text.literal(message.toString()), false);
+		source.sendFeedback(() -> Text.literal(message.toString()), false);
 		return 1;
 	}
 
@@ -55,7 +55,7 @@ public class TopFactionsCommand implements Command {
 			message.append(String.format("%d. %s - %d vote points\n", i + 1, username, user.getVotePoints()));
 		}
 
-		source.sendFeedback(Text.literal(message.toString()), false);
+		source.sendFeedback(() -> Text.literal(message.toString()), false);
 		return 1;
 	}
 

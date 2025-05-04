@@ -24,7 +24,7 @@ import net.fabricmc.fabric.api.object.builder.v1.block.FabricBlockSettings;
 import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.block.Block;
-import net.minecraft.block.Material;
+import net.minecraft.block.MapColor;
 import net.minecraft.block.entity.BlockEntityType;
 import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.item.BlockItem;
@@ -45,9 +45,22 @@ public class FactionsMod implements ModInitializer {
     public static DynmapWrapper dynmap;
     public static BlueMapWrapper bluemap;
 
-    public static final Block FACTIONS_BLOCK = new FactionBlock(FabricBlockSettings.of(Material.METAL).strength(4.0f).luminance(15));
+    public static final Block FACTIONS_BLOCK = new FactionBlock(
+            FabricBlockSettings
+                    .create()
+                    .mapColor(MapColor.IRON_GRAY)
+                    .strength(4.0f)
+                    .luminance(15)
+    );
 
-    public static final Block DISABLED_BLOCK = new Block(FabricBlockSettings.of(Material.METAL).strength(4.0f).luminance(1));
+    public static final Block DISABLED_BLOCK = new Block(
+            FabricBlockSettings
+                    .create()
+                    .mapColor(MapColor.IRON_GRAY)
+                    .strength(4.0f)
+                    .luminance(1)
+    );
+
     public static BlockEntityType<FactionBlockEntity> FACTIONS_BLOCK_ENTITY;
 
 

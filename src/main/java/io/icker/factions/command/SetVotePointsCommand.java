@@ -54,7 +54,8 @@ public class SetVotePointsCommand implements Command {
 		if (player != null) {
 			new Message("Your vote points have been set to " + points + ".").send(player, false);
 		} else {
-			source.sendFeedback(Text.literal("You have set " + username + "'s vote points to " + points + "."), false);
+			String finalUsername = username;
+			source.sendFeedback(() -> Text.literal("You have set " + finalUsername + "'s vote points to " + points + "."), false);
 		}
 		return 1;
 	}

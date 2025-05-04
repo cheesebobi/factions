@@ -51,7 +51,8 @@ public class ViewVotePointsCommand implements Command {
 		if (player != null) {
 			new Message("You have " + votePoints + " vote points.").send(player, false);
 		} else {
-			source.sendFeedback(Text.literal(username + " has " + votePoints + " vote points."), false);
+			String finalUsername = username;
+			source.sendFeedback(() -> Text.literal(finalUsername + " has " + votePoints + " vote points."), false);
 		}
 		return 1;
 	}

@@ -20,7 +20,7 @@ public class UnclaimCommand implements Command {
 		ServerCommandSource source = context.getSource();
 
 		ServerPlayerEntity player = source.getPlayer();
-		ServerWorld world = player.getWorld();
+		ServerWorld world = (ServerWorld) player.getWorld();
 
 		ChunkPos chunkPos = world.getChunk(player.getBlockPos()).getPos();
 		String dimension = world.getRegistryKey().getValue().toString();
@@ -59,7 +59,7 @@ public class UnclaimCommand implements Command {
 		ServerCommandSource source = context.getSource();
 
 		ServerPlayerEntity player = source.getPlayer();
-		ServerWorld world = player.getWorld();
+		ServerWorld world = (ServerWorld) player.getWorld();
 		String dimension = world.getRegistryKey().getValue().toString();
 
 		User user = Command.getUser(player);
