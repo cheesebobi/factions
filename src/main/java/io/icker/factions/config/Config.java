@@ -79,11 +79,17 @@ public class Config {
     @SerializedName("friendlyFire")
     public boolean FRIENDLY_FIRE = false;
 
+    @SerializedName("attackInClaimedChunks")
+    public boolean ATTACK_CLAIMED_CHUNKS = true;
+
     @SerializedName("requiredBypassLevel")
     public int REQUIRED_BYPASS_LEVEL = 2;
 
     @SerializedName("claimProtections")
     public boolean CLAIM_PROTECTION = true;
+
+    @SerializedName("discordAuthKey")
+    public String DISCORD_AUTH_KEY = "Auth Key Here";
 
     public static class DisplayConfig {
         @SerializedName("factionNameMaxLength")

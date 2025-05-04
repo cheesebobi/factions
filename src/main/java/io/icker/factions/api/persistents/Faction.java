@@ -6,10 +6,17 @@ import io.icker.factions.database.Database;
 import io.icker.factions.database.Field;
 import io.icker.factions.database.Name;
 import io.icker.factions.util.WorldUtils;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.inventory.SimpleInventory;
 import net.minecraft.item.ItemStack;
+import net.minecraft.registry.Registries;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.collection.DefaultedList;
+import net.minecraft.world.World;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -33,9 +40,6 @@ public class Faction {
     @Field("Color")
     private String color;
 
-    /**
-     * Whether a player can join without an invitation
-     */
     @Field("Open")
     private boolean open;
 
@@ -60,7 +64,13 @@ public class Faction {
     @Field("GuestPermissions")
     public ArrayList<Relationship.Permissions> guest_permissions = new ArrayList<>(FactionsMod.CONFIG.RELATIONSHIPS.DEFAULT_GUEST_PERMISSIONS);
 
-    public Faction(String name, String description, String motd, Formatting color, boolean open, int power) {
+    @Field("FactionCounter")
+    private int counter = 0;
+
+    @Field("FactionBlockPos")
+    private String factionBlockPosString;
+
+    public Faction(String name, String description, String motd, Formatting color, boolean open, int power, int counter) {
         this.id = UUID.randomUUID();
         this.name = name;
         this.motd = motd;
@@ -68,6 +78,8 @@ public class Faction {
         this.color = color.getName();
         this.open = open;
         this.power = power;
+        this.counter = counter;
+        this.factionBlockPosString = null;
     }
 
     @SuppressWarnings("unused")
@@ -78,6 +90,24 @@ public class Faction {
         return id.toString();
     }
 
+    public RegistryKey<World> getWorldKey() {
+        BlockPos fBlock = getFactionBlockPos(); // Get faction block position
+        if (fBlock == null) {
+            return null; // If there is no faction block set, return null
+        }
+
+        List<Claim> claims = getClaims(); // Get all claims for this faction
+        for (Claim claim : claims) {
+            // Assuming the faction block is in this chunk, you may need a chunk-position check
+            if (claim.x == fBlock.getX() >> 4 && claim.z == fBlock.getZ() >> 4) {
+                // Convert the level string to a RegistryKey<World>
+                return RegistryKey.of(RegistryKeys.WORLD, new Identifier(claim.level));
+            }
+        }
+
+        return null; // Return null if no matching claim is found
+    }
+
     @Nullable
     public static Faction get(UUID id) {
         return STORE.get(id);
@@ -86,10 +116,10 @@ public class Faction {
     @Nullable
     public static Faction getByName(String name) {
         return STORE.values()
-            .stream()
-            .filter(f -> f.name.equals(name))
-            .findFirst()
-            .orElse(null);
+                .stream()
+                .filter(f -> f.name.equals(name))
+                .findFirst()
+                .orElse(null);
     }
 
     public static void add(Faction faction) {
@@ -103,9 +133,9 @@ public class Faction {
     @SuppressWarnings("unused")
     public static List<Faction> allBut(UUID id) {
         return STORE.values()
-            .stream()
-            .filter(f -> f.id != id)
-            .toList();
+                .stream()
+                .filter(f -> f.id != id)
+                .toList();
     }
 
     public UUID getID() {
@@ -140,6 +170,21 @@ public class Faction {
         DefaultedList<ItemStack> stacks = this.safe.stacks;
         this.safe = new SimpleInventory(54);
         return stacks;
+    }
+
+    // Function to clear blocked items from the safe
+    public DefaultedList<ItemStack> clearBlockedItems(PlayerEntity player) {
+        DefaultedList<ItemStack> removedItems = DefaultedList.of();
+        for (int i = 0; i < this.safe.size(); i++) {
+            ItemStack item = this.safe.getStack(i);
+            String itemName = Registries.ITEM.getId(item.getItem()).getPath();
+            if (FactionsMod.CONFIG.SAFE.BLOCKED_ITEMS.contains(itemName)) {
+                removedItems.add(item);
+                player.dropItem(item, false); // Drop the blocked item
+                this.safe.setStack(i, ItemStack.EMPTY); // Remove the blocked item from the safe
+            }
+        }
+        return removedItems; // Return the removed blocked items
     }
 
     public boolean isOpen() {
@@ -201,8 +246,8 @@ public class Faction {
 
     public void removeAllClaims() {
         Claim.getByFaction(id)
-            .stream()
-            .forEach(Claim::remove);
+                .stream()
+                .forEach(Claim::remove);
         FactionEvents.REMOVE_ALL_CLAIMS.invoker().onRemoveAllClaims(this);
     }
 
@@ -299,8 +344,57 @@ public class Faction {
         Database.save(Faction.class, STORE.values().stream().toList());
     }
 
-//  TODO(samu): import per-player power patch
     public int calculateMaxPower(){
         return FactionsMod.CONFIG.POWER.BASE + (getUsers().size() * FactionsMod.CONFIG.POWER.MEMBER);
+    }
+
+    public int getCounter() {
+        int totalVotePoints = 0;
+        for (User user : getUsers()) {
+            totalVotePoints += user.getVotePoints();
+        }
+        return counter + totalVotePoints;
+    }
+
+    public void incrementCounter() {
+        counter++;
+    }
+
+    public void setCounter(int counter) {
+        this.counter = counter;
+        save(); // Save the faction's data if necessary
+    }
+
+
+    public void resetCounter() {
+        counter = 0;
+    }
+
+    public void setFactionBlockPos(BlockPos pos) {
+        this.factionBlockPosString = posToString(pos);
+    }
+
+    public BlockPos getFactionBlockPos() {
+        return posFromString(factionBlockPosString);
+    }
+
+    public boolean hasFactionBlock() {
+        return factionBlockPosString != null;
+    }
+
+    public void removeFactionBlock() {
+        this.factionBlockPosString = null;
+    }
+
+    private static String posToString(BlockPos pos) {
+        return pos == null ? "" : pos.getX() + "," + pos.getY() + "," + pos.getZ();
+    }
+
+    private static BlockPos posFromString(String posString) {
+        if (posString == null || posString.isEmpty()) {
+            return null;
+        }
+        String[] parts = posString.split(",");
+        return new BlockPos(Integer.parseInt(parts[0]), Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
     }
 }
